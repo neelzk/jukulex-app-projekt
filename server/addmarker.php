@@ -24,7 +24,7 @@
         $longitude = mysqli_real_escape_string($_POST["longitude"]);
         $latitude = mysqli_real_escape_string($_POST["latitude"]);
 
-        $sql  = 'INSERT INTO `markers` (`id`, `text`, `longitude`, `latitude`) VALUES (NULL, \''.$text.'\', \''.$longitude.'\', \''.$latitude.'\')';
+        $sql  = 'INSERT INTO `markers` (`id`, `text`, `latitude`, `longitude`) VALUES (NULL, \''.$text.'\', \''.$latitude.'\', \''.$longitude.'\')';
         $res = $mysqli->query($sql);
 
 ?>
