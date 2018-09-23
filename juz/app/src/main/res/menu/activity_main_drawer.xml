@@ -5,21 +5,22 @@
 
     <group android:checkableBehavior="single">
         <!--<item-->
-            <!--android:id="@+id/nav_camera"-->
-            <!--android:icon="@drawable/ic_menu_camera"-->
-            <!--android:title="Import" />-->
+        <!--android:id="@+id/nav_camera"-->
+        <!--android:icon="@drawable/ic_menu_camera"-->
+        <!--android:title="Import" />-->
         <!--<item-->
-            <!--android:id="@+id/nav_gallery"-->
-            <!--android:icon="@drawable/ic_menu_gallery"-->
-            <!--android:title="Gallery" />-->
+        <!--android:id="@+id/nav_gallery"-->
+        <!--android:icon="@drawable/ic_menu_gallery"-->
+        <!--android:title="Gallery" />-->
         <!--<item-->
-            <!--android:id="@+id/nav_slideshow"-->
-            <!--android:icon="@drawable/ic_menu_slideshow"-->
-            <!--android:title="Slideshow" />-->
+        <!--android:id="@+id/nav_slideshow"-->
+        <!--android:icon="@drawable/ic_menu_slideshow"-->
+        <!--android:title="Slideshow" />-->
         <!--<item-->
-            <!--android:id="@+id/nav_manage"-->
-            <!--android:icon="@drawable/ic_menu_manage"-->
-            <!--android:title="Tools" />-->
+        <!--android:id="@+id/nav_manage"-->
+        <!--android:icon="@drawable/ic_menu_manage"-->
+        <!--android:title="Tools" />-->
+
         <item
             android:id="@+id/nav_home"
             android:icon="@drawable/ic_menu_home"
@@ -38,8 +39,15 @@
             android:title="Impressum" />
     </group>
 
-    <!--<item android:title="Rechtliches" />-->
+    <item android:title="Benutzer">
+        <menu>
+            <item
+                android:id="@+id/nav_loginoff"
+                android:icon="@drawable/ic_menu_smiley"
+                android:title="Ein-/Ausloggen" />
 
+        </menu>
+    </item>
 
 
 </menu>
