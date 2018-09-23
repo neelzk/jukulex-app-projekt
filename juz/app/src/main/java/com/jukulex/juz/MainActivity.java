@@ -42,6 +42,8 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        HomeFragment homeFrag = new HomeFragment();
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, homeFrag).commit();
 
     }
 
@@ -83,24 +85,23 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
+        if (id == R.id.nav_home) {
+            HomeFragment homeFrag = new HomeFragment();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, homeFrag).commit();
+        } else if (id == R.id.nav_events) {
+            EventsFragment eventsFrag = new EventsFragment();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, eventsFrag).commit();
 
         } else if (id == R.id.nav_maps) {
             MapsActivity fragment = new MapsActivity();
             FragmentTransaction fragmentTransaction =
                     getSupportFragmentManager().beginTransaction();
-            fragmentTransaction.replace(R.id.content_main, fragment);
+            fragmentTransaction.replace(R.id.fragment_container, fragment);
             fragmentTransaction.commit();
+
+        } else if (id == R.id.nav_impressum) {
+            ImpressumFragment impFrag = new ImpressumFragment();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, impFrag).commit();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
