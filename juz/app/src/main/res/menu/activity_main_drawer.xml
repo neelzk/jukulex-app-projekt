@@ -22,7 +22,7 @@
             android:title="Tools" />
         <item
             android:id="@+id/nav_maps"
-            android:icon="@drawable/ic_menu_gallery"
+            android:icon="@drawable/ic_menu_map"
             android:title="Karte" />
     </group>
 
@@ -38,5 +38,15 @@
                 android:title="Send" />
         </menu>
     </item>
+
+    <item android:title="">
+        <menu>
+            <item
+                android:id="@+id/nav_impressum"
+                android:icon="@drawable/ic_menu_impressum"
+                android:title="Impressum" />
+        </menu>
+    </item>
+
 
 </menu>
