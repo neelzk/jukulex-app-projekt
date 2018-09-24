@@ -1,11 +1,14 @@
 package com.jukulex.juz;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -38,7 +41,7 @@ public class MainActivity extends AppCompatActivity
     FirebaseAuth mAuth = FirebaseAuth.getInstance();
     TextView mTvNavheaderTitle;
     TextView mTvNavheaderSubtitle;
-    MenuItem mLogoffItem;
+    MenuItem mUserSection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,9 +73,13 @@ public class MainActivity extends AppCompatActivity
         // may these cause leaks?
         mTvNavheaderTitle = navigationView.getHeaderView(0).findViewById(R.id.tv_navheader_title);
         mTvNavheaderSubtitle = navigationView.getHeaderView(0).findViewById(R.id.tv_navheader_subtitle);
-        mLogoffItem = navigationView.getMenu().findItem(R.id.nav_loginoff);
-        if (mLogoffItem == null)
-            Log.d(LOGTAG, "mLogoffItem == null");
+        mUserSection = navigationView.getMenu().findItem(R.id.menu_user);
+        if (mUserSection == null) {
+            Log.d(LOGTAG, "item == null");
+        }
+//        mLogoffItem = navigationView.getMenu().findItem(R.id.nav_loginoff);
+//        if (mLogoffItem == null)
+//            Log.d(LOGTAG, "mLogoffItem == null");
         else
             updateViewsOnLoginChange();
 
@@ -122,8 +129,10 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_home) {
             HomeFragment homeFrag = new HomeFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, homeFrag).commit();
-        } else if (id == R.id.nav_loginoff) {
+        } else if (id == R.id.nav_logout) {
             logoutUser();
+        } else if (id == R.id.nav_deleteaccount) {
+            deleteAccount();
         } else if (id == R.id.nav_events) {
             EventsFragment eventsFrag = new EventsFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, eventsFrag).commit();
@@ -187,16 +196,59 @@ public class MainActivity extends AppCompatActivity
 
     private void logoutUser() {
         Log.d(LOGTAG, "logoutUser()");
+
         if (mAuth.getCurrentUser() != null) {
-            AuthUI.getInstance().signOut(this).addOnCompleteListener(new OnCompleteListener<Void>() {
-                @Override
-                public void onComplete(@NonNull Task<Void> task) {
-                    Toast.makeText(getBaseContext(), "Ausgeloggt", Toast.LENGTH_LONG).show();
-                    updateViewsOnLoginChange();
-                }
-            });
+            final Context ctx = this;
+            AlertDialog.Builder adb = new AlertDialog.Builder(ctx);
+            adb.setMessage("Ausloggen?")
+                    .setPositiveButton("Ja", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            AuthUI.getInstance().signOut(ctx).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    Toast.makeText(getBaseContext(), "Ausgeloggt", Toast.LENGTH_LONG).show();
+                                    updateViewsOnLoginChange();
+                                }
+                            });
+                        }
+                    })
+                    .setNegativeButton("Nein", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    }).show();
         }
     }
+
+    private void deleteAccount() {
+        Log.d(LOGTAG, "deleteAccount()");
+
+        if (mAuth.getCurrentUser() != null) {
+            final Context ctx = this;
+            AlertDialog.Builder adb = new AlertDialog.Builder(ctx);
+            adb.setMessage("Account löschen?")
+                    .setPositiveButton("Ja", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            AuthUI.getInstance().delete(ctx).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    Toast.makeText(getBaseContext(), "Account gelöscht", Toast.LENGTH_LONG).show();
+                                    updateViewsOnLoginChange();
+                                }
+                            });
+                        }
+                    })
+                    .setNegativeButton("Nein", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    }).show();
+        }
+        }
 
     private void updateViewsOnLoginChange() {
         FirebaseUser currUser = mAuth.getCurrentUser();
@@ -204,11 +256,11 @@ public class MainActivity extends AppCompatActivity
             Toast.makeText(this, "Eingeloggt als " + currUser.getDisplayName(), Toast.LENGTH_LONG).show();
             mTvNavheaderTitle.setText(currUser.getDisplayName());
             mTvNavheaderSubtitle.setText(currUser.getEmail());
-            mLogoffItem.setVisible(true);
+            mUserSection.setVisible(true);
         } else {
             mTvNavheaderTitle.setText(R.string.nav_header_title);
             mTvNavheaderSubtitle.setText(R.string.nav_header_subtitle);
-            mLogoffItem.setVisible(false);
+            mUserSection.setVisible(false);
         }
     }
 

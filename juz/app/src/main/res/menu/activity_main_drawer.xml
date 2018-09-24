@@ -39,12 +39,17 @@
             android:title="Impressum" />
     </group>
 
-    <item android:title="Benutzer">
+    <item android:title="Benutzer"
+        android:id="@+id/menu_user">
         <menu>
             <item
-                android:id="@+id/nav_loginoff"
-                android:icon="@drawable/ic_menu_smiley"
+                android:id="@+id/nav_logout"
+                android:icon="@drawable/ic_menu_close"
                 android:title="Ausloggen" />
+            <item
+                android:id="@+id/nav_deleteaccount"
+                android:icon="@drawable/ic_menu_delete_forever"
+                android:title="Account löschen"/>
         </menu>
     </item>
 
