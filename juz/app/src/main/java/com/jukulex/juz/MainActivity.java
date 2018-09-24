@@ -16,6 +16,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
@@ -30,12 +32,19 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    static final String LOGTAG = "juzapp - MainActivity";
+    static final int USER_AUTH_REQUEST_CODE = 1;
+
     FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    TextView mTvNavheaderTitle;
+    TextView mTvNavheaderSubtitle;
+    MenuItem mLogoffItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -57,6 +66,15 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         navigationView.setCheckedItem(R.id.nav_home);
+
+        // may these cause leaks?
+        mTvNavheaderTitle = navigationView.getHeaderView(0).findViewById(R.id.tv_navheader_title);
+        mTvNavheaderSubtitle = navigationView.getHeaderView(0).findViewById(R.id.tv_navheader_subtitle);
+        mLogoffItem = navigationView.getMenu().findItem(R.id.nav_loginoff);
+        if (mLogoffItem == null)
+            Log.d(LOGTAG, "mLogoffItem == null");
+        else
+            updateViewsOnLoginChange();
 
         HomeFragment homeFrag = new HomeFragment();
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, homeFrag).commit();
@@ -105,7 +123,7 @@ public class MainActivity extends AppCompatActivity
             HomeFragment homeFrag = new HomeFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, homeFrag).commit();
         } else if (id == R.id.nav_loginoff) {
-            onLoginLogoffClicked();
+            logoutUser();
         } else if (id == R.id.nav_events) {
             EventsFragment eventsFrag = new EventsFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, eventsFrag).commit();
@@ -127,31 +145,10 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == 123) {
-            IdpResponse response = IdpResponse.fromResultIntent(data);
-
-            if (resultCode == RESULT_OK) {
-                Log.d("Juzapp Main", "Successfully signed in");
-                FirebaseUser user = mAuth.getCurrentUser();
-                // ...
-            } else {
-                Log.d("Juzapp Main", "Sign in failed: " + response.getError().getMessage());
-                // Sign in failed. If response is null the user canceled the
-                // sign-in flow using the back button. Otherwise check
-                // response.getError().getErrorCode() and handle the error.
-                // ...
-            }
-        }
-    }
-
-    private void onLoginLogoffClicked() {
-        Log.d("Juzapp", "loginlogoffclicked");
+    public void onNavHeaderClicked(View v) {
+        Log.d(LOGTAG, "onnavheaderclicked");
         if (mAuth.getCurrentUser() == null) {
-            Log.d("Juzapp", "current user == null");
+            Log.d(LOGTAG, "current user == null");
             List<AuthUI.IdpConfig> providers = Arrays.asList(
                     new AuthUI.IdpConfig.EmailBuilder().build(),
 //TODO:                    new AuthUI.IdpConfig.FacebookBuilder().build(),
@@ -161,14 +158,58 @@ public class MainActivity extends AppCompatActivity
                             .createSignInIntentBuilder()
                             .setAvailableProviders(providers)
                             .build(),
-                    123);
-        } else {
+                            USER_AUTH_REQUEST_CODE);
+
+        }
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == USER_AUTH_REQUEST_CODE) {
+            IdpResponse response = IdpResponse.fromResultIntent(data);
+
+            if (resultCode == RESULT_OK) {
+                Log.d(LOGTAG, "Successfully signed in");
+                updateViewsOnLoginChange();
+
+            } else {
+                Toast.makeText(this, "Login fehlgeschlagen: " + response.getError().getMessage() , Toast.LENGTH_LONG).show();
+                // Sign in failed. If response is null the user canceled the
+                // sign-in flow using the back button. Otherwise check
+                // response.getError().getErrorCode() and handle the error.
+                // ...
+            }
+        }
+    }
+
+    private void logoutUser() {
+        Log.d(LOGTAG, "logoutUser()");
+        if (mAuth.getCurrentUser() != null) {
             AuthUI.getInstance().signOut(this).addOnCompleteListener(new OnCompleteListener<Void>() {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
-                    Log.d("Juzapp", "logged off");
+                    Toast.makeText(getBaseContext(), "Ausgeloggt", Toast.LENGTH_LONG).show();
+                    updateViewsOnLoginChange();
                 }
             });
         }
     }
+
+    private void updateViewsOnLoginChange() {
+        FirebaseUser currUser = mAuth.getCurrentUser();
+        if (currUser != null) {
+            Toast.makeText(this, "Eingeloggt als " + currUser.getDisplayName(), Toast.LENGTH_LONG).show();
+            mTvNavheaderTitle.setText(currUser.getDisplayName());
+            mTvNavheaderSubtitle.setText(currUser.getEmail());
+            mLogoffItem.setVisible(true);
+        } else {
+            mTvNavheaderTitle.setText(R.string.nav_header_title);
+            mTvNavheaderSubtitle.setText(R.string.nav_header_subtitle);
+            mLogoffItem.setVisible(false);
+        }
+    }
+
 }
