@@ -185,11 +185,13 @@ public class MainActivity extends AppCompatActivity
                 updateViewsOnLoginChange();
 
             } else {
-                Toast.makeText(this, "Login fehlgeschlagen: " + response.getError().getMessage() , Toast.LENGTH_LONG).show();
                 // Sign in failed. If response is null the user canceled the
                 // sign-in flow using the back button. Otherwise check
                 // response.getError().getErrorCode() and handle the error.
-                // ...
+
+                if (response != null) {
+                    Toast.makeText(this, "Login fehlgeschlagen: " + response.getError().getMessage(), Toast.LENGTH_LONG).show();
+                }
             }
         }
     }
