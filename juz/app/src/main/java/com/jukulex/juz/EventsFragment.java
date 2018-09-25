@@ -16,6 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class EventsFragment extends Fragment {
     private static final String LOGTAG = "juzapp - EventsFragment";
+    private UserProperties mCurrentUserProperties;
 
     @Nullable
     @Override
@@ -36,12 +37,15 @@ public class EventsFragment extends Fragment {
             userProperties.document(auth.getUid()).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                 @Override
                 public void onSuccess(DocumentSnapshot documentSnapshot) {
-                    // this works but sort of sucks. TODO: deserialize document to UserProperties object
-                    if (documentSnapshot.getBoolean("postEventsAllowed")) {
-                        Log.d(LOGTAG, "user is allowed to post new events");
-                    } else {
-                        Log.d(LOGTAG, "user is NOT allowed to post new events");
+                    if (documentSnapshot.exists()) {
+                        mCurrentUserProperties = documentSnapshot.toObject(UserProperties.class);
+                        if (mCurrentUserProperties.isPostEventsAllowed()) {
+                            Log.d(LOGTAG, "user is allowed to post new events");
+                        } else {
+                            Log.d(LOGTAG, "user is NOT allowed to post new events");
+                        }
                     }
+
                 }
             });
         }
