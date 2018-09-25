@@ -28,6 +28,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,13 +37,14 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    static final String LOGTAG = "juzapp - MainActivity";
-    static final int USER_AUTH_REQUEST_CODE = 1;
+    private static final String LOGTAG = "juzapp - MainActivity";
+    private static final int USER_AUTH_REQUEST_CODE = 1;
 
-    FirebaseAuth mAuth = FirebaseAuth.getInstance();
-    TextView mTvNavheaderTitle;
-    TextView mTvNavheaderSubtitle;
-    MenuItem mUserSection;
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private CollectionReference mUserCollectionRef = FirebaseFirestore.getInstance().collection("Users");
+    private TextView mTvNavheaderTitle;
+    private TextView mTvNavheaderSubtitle;
+    private MenuItem mUserSection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -184,6 +187,12 @@ public class MainActivity extends AppCompatActivity
                 Log.d(LOGTAG, "Successfully signed in");
                 updateViewsOnLoginChange();
 
+                if (response.isNewUser()) {
+
+                    Log.d(LOGTAG, "new user! id: " + mAuth.getUid());
+
+                }
+
             } else {
                 // Sign in failed. If response is null the user canceled the
                 // sign-in flow using the back button. Otherwise check
@@ -209,8 +218,12 @@ public class MainActivity extends AppCompatActivity
                             AuthUI.getInstance().signOut(ctx).addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
-                                    Toast.makeText(getBaseContext(), "Ausgeloggt", Toast.LENGTH_LONG).show();
-                                    updateViewsOnLoginChange();
+                                    if (task.isSuccessful()) {
+                                        Toast.makeText(getBaseContext(), "Ausgeloggt", Toast.LENGTH_LONG).show();
+                                        updateViewsOnLoginChange();
+                                    } else {
+                                        Toast.makeText(getBaseContext(), "Ausloggen fehlgeschlagen", Toast.LENGTH_LONG).show();
+                                    }
                                 }
                             });
                         }
@@ -237,8 +250,12 @@ public class MainActivity extends AppCompatActivity
                             AuthUI.getInstance().delete(ctx).addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
-                                    Toast.makeText(getBaseContext(), "Account gelöscht", Toast.LENGTH_LONG).show();
-                                    updateViewsOnLoginChange();
+                                    if (task.isSuccessful()) {
+                                        Toast.makeText(getBaseContext(), "Account gelöscht", Toast.LENGTH_LONG).show();
+                                        updateViewsOnLoginChange();
+                                    } else {
+                                        Toast.makeText(getBaseContext(), "Account löschen fehlgeschlagen", Toast.LENGTH_LONG).show();
+                                    }
                                 }
                             });
                         }
