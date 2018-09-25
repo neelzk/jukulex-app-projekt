@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity
     private static final int USER_AUTH_REQUEST_CODE = 1;
 
     private FirebaseAuth mAuth = FirebaseAuth.getInstance();
-    private CollectionReference mUserCollectionRef = FirebaseFirestore.getInstance().collection("Users");
+    private CollectionReference mUserCollectionRef = FirebaseFirestore.getInstance().collection("UserProperties");
     private TextView mTvNavheaderTitle;
     private TextView mTvNavheaderSubtitle;
     private MenuItem mUserSection;
@@ -191,6 +191,9 @@ public class MainActivity extends AppCompatActivity
 
                     Log.d(LOGTAG, "new user! id: " + mAuth.getUid());
 
+                    // create a new userproperties obj and write it to db
+                    UserProperties up = new UserProperties();
+                    mUserCollectionRef.document(mAuth.getUid()).set(up);
                 }
 
             } else {
@@ -242,6 +245,8 @@ public class MainActivity extends AppCompatActivity
 
         if (mAuth.getCurrentUser() != null) {
             final Context ctx = this;
+            final String userId = mAuth.getUid();
+
             AlertDialog.Builder adb = new AlertDialog.Builder(ctx);
             adb.setMessage("Account löschen?")
                     .setPositiveButton("Ja", new DialogInterface.OnClickListener() {
@@ -253,6 +258,10 @@ public class MainActivity extends AppCompatActivity
                                     if (task.isSuccessful()) {
                                         Toast.makeText(getBaseContext(), "Account gelöscht", Toast.LENGTH_LONG).show();
                                         updateViewsOnLoginChange();
+
+                                        // delete the user's properties
+                                        mUserCollectionRef.document(userId).delete();
+
                                     } else {
                                         Toast.makeText(getBaseContext(), "Account löschen fehlgeschlagen", Toast.LENGTH_LONG).show();
                                     }
