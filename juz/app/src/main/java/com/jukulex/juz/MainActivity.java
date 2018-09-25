@@ -276,9 +276,12 @@ public class MainActivity extends AppCompatActivity
                         }
                     }).show();
         }
-        }
+    }
 
     private void updateViewsOnLoginChange() {
+        // TODO: update possible views of the currently active fragment
+//        Fragment activeFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+
         FirebaseUser currUser = mAuth.getCurrentUser();
         if (currUser != null) {
             Toast.makeText(this, "Eingeloggt als " + currUser.getDisplayName(), Toast.LENGTH_LONG).show();
