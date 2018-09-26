@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
@@ -77,18 +79,9 @@ public class MainActivity extends AppCompatActivity
         mTvNavheaderTitle = navigationView.getHeaderView(0).findViewById(R.id.tv_navheader_title);
         mTvNavheaderSubtitle = navigationView.getHeaderView(0).findViewById(R.id.tv_navheader_subtitle);
         mUserSection = navigationView.getMenu().findItem(R.id.menu_user);
-        if (mUserSection == null) {
-            Log.d(LOGTAG, "item == null");
-        }
-//        mLogoffItem = navigationView.getMenu().findItem(R.id.nav_loginoff);
-//        if (mLogoffItem == null)
-//            Log.d(LOGTAG, "mLogoffItem == null");
-        else
-            updateViewsOnLoginChange();
+        updateViewsOnLoginChange();
 
-        HomeFragment homeFrag = new HomeFragment();
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, homeFrag).commit();
-
+        replaceFragment(new HomeFragment(), false);
     }
 
     @Override
@@ -123,33 +116,30 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
+        switch (item.getItemId()) {
+            case R.id.nav_home:
+                replaceFragment(new HomeFragment(), false);
+                break;
+            case R.id.nav_events:
+                replaceFragment(new EventsFragment(), false);
+                break;
+            case R.id.nav_impressum:
+                replaceFragment(new ImpressumFragment(), false);
+                break;
+            case R.id.nav_maps:
+                replaceFragment(new MapsActivity(), true);
+                break;
+            case R.id.nav_logout:
+                logoutUser();
+                return false;
+            case R.id.nav_deleteaccount:
+                deleteAccount();
+                return false;
 
-        if (id == R.id.nav_home) {
-            HomeFragment homeFrag = new HomeFragment();
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, homeFrag).commit();
-        } else if (id == R.id.nav_logout) {
-            logoutUser();
-        } else if (id == R.id.nav_deleteaccount) {
-            deleteAccount();
-        } else if (id == R.id.nav_events) {
-            EventsFragment eventsFrag = new EventsFragment();
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, eventsFrag).commit();
-
-        } else if (id == R.id.nav_maps) {
-            MapsActivity fragment = new MapsActivity();
-            FragmentTransaction fragmentTransaction =
-                    getSupportFragmentManager().beginTransaction();
-            fragmentTransaction.replace(R.id.fragment_container, fragment);
-            fragmentTransaction.commit();
-
-        } else if (id == R.id.nav_impressum) {
-            ImpressumFragment impFrag = new ImpressumFragment();
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, impFrag).commit();
+            default:
+                return false;
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -263,7 +253,7 @@ public class MainActivity extends AppCompatActivity
                                         mUserCollectionRef.document(userId).delete();
 
                                     } else {
-                                        Toast.makeText(getBaseContext(), "Account löschen fehlgeschlagen", Toast.LENGTH_LONG).show();
+                                        Toast.makeText(getBaseContext(), "Account löschen fehlgeschlagen: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
                                     }
                                 }
                             });
@@ -293,6 +283,23 @@ public class MainActivity extends AppCompatActivity
             mTvNavheaderSubtitle.setText(R.string.nav_header_subtitle);
             mUserSection.setVisible(false);
         }
+    }
+
+    private void replaceFragment(Fragment fragment, boolean addToBackStack) {
+        FragmentManager fm = getSupportFragmentManager();
+        // only the mapsframent will be added to the stack, so we're always popping here
+        // to make sure at most one fragment remains on the stack.
+        // ensures having an empty stack, even if the user switches from maps to another fragment by menu
+        fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+        FragmentTransaction transaction = fm.beginTransaction();
+        transaction.replace(R.id.fragment_container, fragment);
+
+        if (addToBackStack) {
+            transaction.addToBackStack(null);
+        }
+
+        transaction.commit();
     }
 
 }
