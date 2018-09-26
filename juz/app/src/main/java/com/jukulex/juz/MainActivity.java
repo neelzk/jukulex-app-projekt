@@ -177,15 +177,6 @@ public class MainActivity extends AppCompatActivity
                 Log.d(LOGTAG, "Successfully signed in");
                 updateViewsOnLoginChange();
 
-                if (response.isNewUser()) {
-
-                    Log.d(LOGTAG, "new user! id: " + mAuth.getUid());
-
-                    // create a new userproperties obj and write it to db
-                    UserProperties up = new UserProperties();
-                    mUserCollectionRef.document(mAuth.getUid()).set(up);
-                }
-
             } else {
                 // Sign in failed. If response is null the user canceled the
                 // sign-in flow using the back button. Otherwise check
@@ -248,9 +239,6 @@ public class MainActivity extends AppCompatActivity
                                     if (task.isSuccessful()) {
                                         Toast.makeText(getBaseContext(), "Account gelöscht", Toast.LENGTH_LONG).show();
                                         updateViewsOnLoginChange();
-
-                                        // delete the user's properties
-                                        mUserCollectionRef.document(userId).delete();
 
                                     } else {
                                         Toast.makeText(getBaseContext(), "Account löschen fehlgeschlagen: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
