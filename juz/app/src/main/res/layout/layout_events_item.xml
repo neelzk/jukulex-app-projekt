@@ -13,35 +13,46 @@
 
     <TextView
         android:id="@+id/tv_title"
-        android:layout_width="72dp"
-        android:layout_marginStart="5dp"
+        android:layout_width="match_parent"
+        android:textSize="18sp"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_toEndOf="@id/image" />
+        android:layout_marginStart="5dp"
+        android:layout_toRightOf="@id/image"
+        android:text="tv_title" />
 
-    <TextView
-        android:id="@+id/tv_description"
-        android:layout_width="72dp"
-        android:layout_marginStart="5dp"
+    <LinearLayout
+        android:id="@+id/layout_details"
+        android:visibility="gone"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_toEndOf="@id/tv_title"
-        android:scrollHorizontally="false" />
+        android:layout_below="@id/image"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tv_date"
-        android:layout_width="72dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
-        android:layout_centerVertical="true"
-        android:layout_toEndOf="@id/tv_description"
-        android:scrollHorizontally="false" />
+        <TextView
+            android:id="@+id/tv_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollHorizontally="false"
+            android:text="tv_description" />
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
-        android:layout_alignParentRight="true"
-        android:text="Teilnehmen" />
+        <TextView
+            android:id="@+id/tv_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollHorizontally="false"
+            android:text="tv_date" />
+
+        <Button style="@style/FirebaseUI.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Teilnehmen" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_below="@id/layout_details"
+        android:layout_width="match_parent"
+        android:background="#000000"
+        android:layout_height="1dp"/>
 
 </RelativeLayout>
