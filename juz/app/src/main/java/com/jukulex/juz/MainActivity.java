@@ -24,6 +24,8 @@ import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -45,10 +47,14 @@ public class MainActivity extends AppCompatActivity
     private TextView mTvNavheaderTitle;
     private TextView mTvNavheaderSubtitle;
     private MenuItem mUserSection;
+    private boolean mGoogleServicesOK;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mGoogleServicesOK = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(MainActivity.this) == ConnectionResult.SUCCESS;
+        Log.d(LOGTAG, "services OK? " + mGoogleServicesOK);
+
         setContentView(R.layout.activity_main);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -67,7 +73,11 @@ public class MainActivity extends AppCompatActivity
         mTvNavheaderTitle = navigationView.getHeaderView(0).findViewById(R.id.tv_navheader_title);
         mTvNavheaderSubtitle = navigationView.getHeaderView(0).findViewById(R.id.tv_navheader_subtitle);
         mUserSection = navigationView.getMenu().findItem(R.id.menu_user);
+
         updateViewsOnLoginChange();
+
+        if (!mGoogleServicesOK)
+            mTvNavheaderSubtitle.setText("");
 
         replaceFragment(new HomeFragment(), "Start", false);
     }
@@ -111,7 +121,10 @@ public class MainActivity extends AppCompatActivity
                 replaceFragment(new HomeFragment(), "Start",  false);
                 break;
             case R.id.nav_events:
-                replaceFragment(new EventsFragment(), "Termine", false);
+                if (mGoogleServicesOK)
+                    replaceFragment(new EventsFragment(), "Termine", false);
+                else
+                     replaceFragment(new EventsFragmentNoGoogle(), "Termine", false);
                 break;
             case R.id.nav_impressum:
                 replaceFragment(new ImpressumFragment(), "Impressum", false);
@@ -137,22 +150,22 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onNavHeaderClicked(View v) {
-        Log.d(LOGTAG, "onnavheaderclicked");
-        if (mAuth.getCurrentUser() == null) {
-            Log.d(LOGTAG, "current user == null");
-            List<AuthUI.IdpConfig> providers = Arrays.asList(
-                    new AuthUI.IdpConfig.EmailBuilder().build(),
+        if (mGoogleServicesOK) {
+            if (mAuth.getCurrentUser() == null) {
+                Log.d(LOGTAG, "current user == null");
+                List<AuthUI.IdpConfig> providers = Arrays.asList(
+                        new AuthUI.IdpConfig.EmailBuilder().build(),
 //TODO:                    new AuthUI.IdpConfig.FacebookBuilder().build(),
-                    new AuthUI.IdpConfig.GoogleBuilder().build());
+                        new AuthUI.IdpConfig.GoogleBuilder().build());
 
-            startActivityForResult(AuthUI.getInstance()
-                            .createSignInIntentBuilder()
-                            .setAvailableProviders(providers)
-                            .build(),
-                            USER_AUTH_REQUEST_CODE);
+                startActivityForResult(AuthUI.getInstance()
+                                .createSignInIntentBuilder()
+                                .setAvailableProviders(providers)
+                                .build(),
+                        USER_AUTH_REQUEST_CODE);
 
+            }
         }
-
     }
 
     @Override
@@ -263,7 +276,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void replaceFragment(Fragment fragment, String tag, boolean addToBackStack) {
-        Log.d(LOGTAG, "replacing " + tag);
         FragmentManager fm = getSupportFragmentManager();
         // only the mapsframent will be added to the stack, so we're always popping here
         // to make sure at most one fragment remains on the stack.
