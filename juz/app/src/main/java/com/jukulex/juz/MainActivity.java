@@ -64,13 +64,12 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
         navigationView.setCheckedItem(R.id.nav_home);
 
-        // may these cause leaks?
         mTvNavheaderTitle = navigationView.getHeaderView(0).findViewById(R.id.tv_navheader_title);
         mTvNavheaderSubtitle = navigationView.getHeaderView(0).findViewById(R.id.tv_navheader_subtitle);
         mUserSection = navigationView.getMenu().findItem(R.id.menu_user);
         updateViewsOnLoginChange();
 
-        replaceFragment(new HomeFragment(), false);
+        replaceFragment(new HomeFragment(), "Start", false);
     }
 
     @Override
@@ -109,16 +108,17 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.nav_home:
-                replaceFragment(new HomeFragment(), false);
+                replaceFragment(new HomeFragment(), "Start",  false);
                 break;
             case R.id.nav_events:
-                replaceFragment(new EventsFragment(), false);
+                replaceFragment(new EventsFragment(), "Termine", false);
                 break;
             case R.id.nav_impressum:
-                replaceFragment(new ImpressumFragment(), false);
+                replaceFragment(new ImpressumFragment(), "Impressum", false);
                 break;
             case R.id.nav_maps:
-                replaceFragment(new MapsActivity(), true);
+                // FIXME: y u no get selected in menu?
+                replaceFragment(new MapsActivity(), "Maps", true);
                 break;
             case R.id.nav_logout:
                 logoutUser();
@@ -262,19 +262,23 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void replaceFragment(Fragment fragment, boolean addToBackStack) {
+    private void replaceFragment(Fragment fragment, String tag, boolean addToBackStack) {
+        Log.d(LOGTAG, "replacing " + tag);
         FragmentManager fm = getSupportFragmentManager();
         // only the mapsframent will be added to the stack, so we're always popping here
         // to make sure at most one fragment remains on the stack.
         // ensures having an empty stack, even if the user switches from maps to another fragment by menu
-        fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+//        fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
 
         FragmentTransaction transaction = fm.beginTransaction();
         transaction.replace(R.id.fragment_container, fragment);
 
-        if (addToBackStack) {
-            transaction.addToBackStack(null);
-        }
+//        if (addToBackStack) {
+//            transaction.addToBackStack(null);
+//        }
+
+        Toolbar tb = findViewById(R.id.toolbar);
+        tb.setTitle("JuKulEx App - " + tag);
 
         transaction.commit();
     }
