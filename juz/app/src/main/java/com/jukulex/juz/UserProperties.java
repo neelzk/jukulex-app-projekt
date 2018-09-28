@@ -6,13 +6,6 @@ public class UserProperties {
     private boolean commentAllowed;
     private boolean deactivated;
 
-    public UserProperties() {
-        this.postEventsAllowed = false;
-        this.postMapMarkersAllowed = true;
-        this.commentAllowed = true;
-        this.deactivated = false;
-    }
-
     public boolean isPostEventsAllowed() {
         return postEventsAllowed;
     }
