@@ -2,17 +2,27 @@ package com.jukulex.juz;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class EventsRecyclerViewAdapter extends RecyclerView.Adapter<EventsRecyclerViewAdapter.ViewHolder> {
     private static final String LOGTAG = "Juzapp EventsRCA";
+    private ArrayList<Event> mEvents;
+
+    public EventsRecyclerViewAdapter(ArrayList<Event> events) {
+        mEvents = events;
+    }
 
     @NonNull
     @Override
@@ -24,10 +34,12 @@ public class EventsRecyclerViewAdapter extends RecyclerView.Adapter<EventsRecycl
 
     @Override
     public void onBindViewHolder(@NonNull final EventsRecyclerViewAdapter.ViewHolder holder, int position) {
-        int no = position + 1;
-        holder.tv_title.setText("Veranstaltung Nr. " + no);
-        holder.tv_description.setText("Beschreibung Nr. " + no);
-        holder.tv_date.setText(no + ".01.2020 23:59");
+        Event event = mEvents.get(position);
+        holder.tv_title.setText(event.getTitle());
+        holder.tv_description.setText(event.getDescription());
+        if (event.getStartDate() != null) {
+            holder.tv_date.setText(event.getStartDate().toString());
+        }
 
         if (holder.isExpanded) {
             holder.detailLayout.setVisibility(View.VISIBLE);
@@ -51,12 +63,11 @@ public class EventsRecyclerViewAdapter extends RecyclerView.Adapter<EventsRecycl
             }
         });
 
-
     }
 
     @Override
     public int getItemCount() {
-        return 30;
+        return mEvents.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

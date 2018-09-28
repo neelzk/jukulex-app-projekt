@@ -14,12 +14,22 @@ import android.view.ViewGroup;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class EventsFragment extends Fragment {
     private static final String LOGTAG = "juzapp - EventsFragment";
     private UserProperties mCurrentUserProperties;
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private EventsRecyclerViewAdapter mEventsAdapter;
+    private ArrayList<Event> mEventsList;
 
     @Nullable
     @Override
@@ -32,22 +42,24 @@ public class EventsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         RecyclerView recView = getView().findViewById(R.id.recyclerview);
-        EventsRecyclerViewAdapter eventsAdapter = new EventsRecyclerViewAdapter();
-        recView.setAdapter(eventsAdapter);
+        mEventsAdapter = new EventsRecyclerViewAdapter(mEventsList);
+        recView.setAdapter(mEventsAdapter);
         recView.setLayoutManager(new LinearLayoutManager(getContext()));
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(LOGTAG, "created");
-
         FirebaseAuth auth = FirebaseAuth.getInstance();
-        if (auth.getCurrentUser() != null) {
-            CollectionReference userProperties = FirebaseFirestore.getInstance().collection("UserProperties");
 
-            // get the Uid of the user and then the UserProperties document of that Uid
-            userProperties.document(auth.getUid()).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+        mEventsList = new ArrayList<>();
+
+        // if a user is logged in, get his/her properties
+        if (auth.getCurrentUser() != null) {
+            String userPropDocPath = "UserProperties/" + auth.getUid();
+
+            DocumentReference userPropDocRef = db.document(userPropDocPath);
+            userPropDocRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                 @Override
                 public void onSuccess(DocumentSnapshot documentSnapshot) {
                     if (documentSnapshot.exists()) {
@@ -62,6 +74,27 @@ public class EventsFragment extends Fragment {
                 }
             });
         }
+
+        // get the events from the db ordered by the date they start.
+        // events that started more than 12 hours (4.23 mio milliseconds) ago are excluded.
+        Date twelveHoursAgo = new Date();
+        twelveHoursAgo.setTime(twelveHoursAgo.getTime() - 43200000);
+
+        Query eventsQuery = db.collection("Events")
+                .whereGreaterThan("startDate", twelveHoursAgo)
+                .orderBy("startDate");
+
+        eventsQuery.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                List<DocumentSnapshot> docSnapshots = queryDocumentSnapshots.getDocuments();
+                for (DocumentSnapshot ds : docSnapshots) {
+                    Event ev = ds.toObject(Event.class);
+                    mEventsList.add(ev);
+                }
+                mEventsAdapter.notifyDataSetChanged();
+            }
+        });
 
     }
 }
