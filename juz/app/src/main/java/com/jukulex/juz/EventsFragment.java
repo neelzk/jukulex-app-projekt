@@ -30,9 +30,11 @@ public class EventsFragment extends Fragment implements SwipeRefreshLayout.OnRef
     private static final String LOGTAG = "juzapp - EventsFragment";
     private UserProperties mCurrentUserProperties;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
     private EventsRecyclerViewAdapter mEventsAdapter;
     private ArrayList<Event> mEventsList;
     private SwipeRefreshLayout mSwipeRefreshLayout;
+    private FloatingActionButton mFabAdd;
 
     @Nullable
     @Override
@@ -45,20 +47,20 @@ public class EventsFragment extends Fragment implements SwipeRefreshLayout.OnRef
         super.onViewCreated(view, savedInstanceState);
 
         RecyclerView recView = getView().findViewById(R.id.recyclerview);
-        mEventsAdapter = new EventsRecyclerViewAdapter(mEventsList);
+        mEventsAdapter = new EventsRecyclerViewAdapter(mEventsList, mAuth);
         recView.setAdapter(mEventsAdapter);
         recView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         mSwipeRefreshLayout = (SwipeRefreshLayout) getView().findViewById(R.id.swiperefresh);
         mSwipeRefreshLayout.setOnRefreshListener(this);
 
-        fetchDatesFromDb();
+        fetchEventsFromDb();
 
-        FloatingActionButton fab = (FloatingActionButton) getView().findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        mFabAdd = getView().findViewById(R.id.fab);
+        mFabAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d(LOGTAG, "clicked");
+                postNewEvent();
             }
         });
     }
@@ -82,8 +84,10 @@ public class EventsFragment extends Fragment implements SwipeRefreshLayout.OnRef
                         mCurrentUserProperties = documentSnapshot.toObject(UserProperties.class);
                         if (mCurrentUserProperties.isPostEventsAllowed()) {
                             Log.d(LOGTAG, "user is allowed to post new events");
+                            mFabAdd.setVisibility(View.VISIBLE);
                         } else {
                             Log.d(LOGTAG, "user is NOT allowed to post new events");
+
                         }
                     }
 
@@ -95,10 +99,14 @@ public class EventsFragment extends Fragment implements SwipeRefreshLayout.OnRef
 
     @Override
     public void onRefresh() {
-        fetchDatesFromDb();
+        fetchEventsFromDb();
     }
 
-    private void fetchDatesFromDb() {
+    private void postNewEvent() {
+        // TODO: implement me
+    }
+
+    private void fetchEventsFromDb() {
         mSwipeRefreshLayout.setRefreshing(true);
         // get the events from the db ordered by the date they start.
         // events that started more than 12 hours (4.23 mio milliseconds) ago are excluded.

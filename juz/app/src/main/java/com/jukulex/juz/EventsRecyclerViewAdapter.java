@@ -7,11 +7,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,9 +22,11 @@ import java.util.List;
 public class EventsRecyclerViewAdapter extends RecyclerView.Adapter<EventsRecyclerViewAdapter.ViewHolder> {
     private static final String LOGTAG = "Juzapp EventsRCA";
     private ArrayList<Event> mEvents;
+    private FirebaseAuth mAuth;
 
-    public EventsRecyclerViewAdapter(ArrayList<Event> events) {
+    public EventsRecyclerViewAdapter(ArrayList<Event> events, FirebaseAuth auth) {
         mEvents = events;
+        mAuth = auth;
     }
 
     @NonNull
@@ -37,6 +42,11 @@ public class EventsRecyclerViewAdapter extends RecyclerView.Adapter<EventsRecycl
         Event event = mEvents.get(position);
         holder.tv_title.setText(event.getTitle());
         holder.tv_description.setText(event.getDescription());
+
+        if (mAuth.getUid() == null) {
+            holder.btn_participate.setVisibility(View.GONE);
+        }
+
         if (event.getStartDate() != null) {
             holder.tv_date.setText(event.getStartDate().toString());
         }
@@ -71,13 +81,14 @@ public class EventsRecyclerViewAdapter extends RecyclerView.Adapter<EventsRecycl
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        RelativeLayout parentLayout;
-        LinearLayout detailLayout;
-        ImageView img;
-        TextView tv_title;
-        TextView tv_description;
-        TextView tv_date;
-        boolean isExpanded = false;
+        private RelativeLayout parentLayout;
+        private LinearLayout detailLayout;
+        private ImageView img;
+        private Button btn_participate;
+        private TextView tv_title;
+        private TextView tv_description;
+        private TextView tv_date;
+        private boolean isExpanded = false;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -85,6 +96,7 @@ public class EventsRecyclerViewAdapter extends RecyclerView.Adapter<EventsRecycl
             parentLayout = itemView.findViewById(R.id.parent_layout);
             detailLayout = itemView.findViewById(R.id.layout_details);
             img = itemView.findViewById(R.id.image);
+            btn_participate = itemView.findViewById(R.id.btn_participate);
             tv_title = itemView.findViewById(R.id.tv_title);
             tv_description = itemView.findViewById(R.id.tv_description);
             tv_date = itemView.findViewById(R.id.tv_date);
