@@ -2,12 +2,16 @@ package com.jukulex.juz;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -34,7 +38,7 @@ import java.util.List;
 
 public class MapsActivity extends SupportMapFragment implements OnMapReadyCallback, OnMapLongClickListener {
 
-    private static final String LOGTAG = "MapsActivity";
+    private static final String LOGTAG = "juzapp - MapsActivity";
 
     private Context mActivity;
     private GoogleMap mMap;
@@ -68,8 +72,10 @@ public class MapsActivity extends SupportMapFragment implements OnMapReadyCallba
         mMap = googleMap;
         mMap.setOnMapLongClickListener(this);
 
-        // TODO: check to see if permission is available (with checkPermission)
-        mMap.setMyLocationEnabled(true);
+        if (ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+            mMap.setMyLocationEnabled(true);
+        else
+            Log.d(LOGTAG, "Location permission not granted");
 
         addBuiltinMarkers();
 
@@ -79,22 +85,55 @@ public class MapsActivity extends SupportMapFragment implements OnMapReadyCallba
     }
 
     @Override
-    public void onMapLongClick(LatLng point) {
+    public void onMapLongClick(final LatLng point) {
         if (mCurrentUserProperties == null || !mCurrentUserProperties.isPostMapMarkersAllowed()) {
             Toast.makeText(mActivity, "Du darfst keine Marker posten.", Toast.LENGTH_LONG).show();
             return;
         }
 
-        // TODO: create a dialog to read title and snippet
-        String title = "TestTitle";
-        String snippet = "TestSnippet";
+        // create an alert dialog to let the user enter a title and an optional description
+        // by creating two EditTexts which are added to a LinearLayout
+        AlertDialog.Builder alert = new AlertDialog.Builder(mActivity);
 
-        // place the marker onto the map
-        mMap.addMarker(new MarkerOptions().position(point).title(title));
+        final LinearLayout ll = new LinearLayout(mActivity);
+        ll.setOrientation(LinearLayout.VERTICAL);
 
-        // save the new marker to the database
-        MapMarker mm = new MapMarker(new GeoPoint(point.latitude, point.longitude), title, snippet, mAuth.getUid());
-        mMarkerColRef.add(mm);
+        final EditText inputTitle = new EditText(mActivity);
+        inputTitle.setHint("Titel");
+        final EditText inputDescr = new EditText(mActivity);
+        inputDescr.setHint("Beschreibung");
+
+        ll.addView(inputTitle);
+        ll.addView(inputDescr);
+        alert.setTitle("Bitte Titel und Beschreibung eingeben");
+        alert.setView(ll);
+
+        alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+
+                // title is mandatory
+                String title = inputTitle.getText().toString();
+                if (title.length() == 0)
+                    return;
+
+                String snippet = inputDescr.getText().toString();
+                if (snippet.length() == 0)
+                    snippet = null;
+
+                // place the marker onto the map
+                mMap.addMarker(new MarkerOptions().position(point).title(title).snippet(snippet));
+
+                // save the new marker to the database
+                MapMarker mm = new MapMarker(new GeoPoint(point.latitude, point.longitude), title, snippet, mAuth.getUid());
+                mMarkerColRef.add(mm);
+
+            }
+        });
+
+        alert.setNegativeButton("Abbrechen", null);
+
+        alert.show();
+
     }
 
     private void addBuiltinMarkers() {
