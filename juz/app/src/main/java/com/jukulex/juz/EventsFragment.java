@@ -3,7 +3,9 @@ package com.jukulex.juz;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -24,12 +26,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class EventsFragment extends Fragment {
+public class EventsFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
     private static final String LOGTAG = "juzapp - EventsFragment";
     private UserProperties mCurrentUserProperties;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private EventsRecyclerViewAdapter mEventsAdapter;
     private ArrayList<Event> mEventsList;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
 
     @Nullable
     @Override
@@ -45,6 +48,19 @@ public class EventsFragment extends Fragment {
         mEventsAdapter = new EventsRecyclerViewAdapter(mEventsList);
         recView.setAdapter(mEventsAdapter);
         recView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        mSwipeRefreshLayout = (SwipeRefreshLayout) getView().findViewById(R.id.swiperefresh);
+        mSwipeRefreshLayout.setOnRefreshListener(this);
+
+        fetchDatesFromDb();
+
+        FloatingActionButton fab = (FloatingActionButton) getView().findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d(LOGTAG, "clicked");
+            }
+        });
     }
 
     @Override
@@ -75,6 +91,15 @@ public class EventsFragment extends Fragment {
             });
         }
 
+    }
+
+    @Override
+    public void onRefresh() {
+        fetchDatesFromDb();
+    }
+
+    private void fetchDatesFromDb() {
+        mSwipeRefreshLayout.setRefreshing(true);
         // get the events from the db ordered by the date they start.
         // events that started more than 12 hours (4.23 mio milliseconds) ago are excluded.
         Date twelveHoursAgo = new Date();
@@ -87,7 +112,10 @@ public class EventsFragment extends Fragment {
         eventsQuery.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
             @Override
             public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                mSwipeRefreshLayout.setRefreshing(false);
+
                 List<DocumentSnapshot> docSnapshots = queryDocumentSnapshots.getDocuments();
+                mEventsList.clear();
                 for (DocumentSnapshot ds : docSnapshots) {
                     Event ev = ds.toObject(Event.class);
                     mEventsList.add(ev);
