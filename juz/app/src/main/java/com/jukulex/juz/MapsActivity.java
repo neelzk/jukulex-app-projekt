@@ -1,12 +1,17 @@
 package com.jukulex.juz;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.Location;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
-import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -14,11 +19,14 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -26,26 +34,29 @@ import java.util.List;
 
 public class MapsActivity extends SupportMapFragment implements OnMapReadyCallback, OnMapLongClickListener {
 
+    private static final String LOGTAG = "MapsActivity";
+
+    private Context mActivity;
     private GoogleMap mMap;
+    private FusedLocationProviderClient mFusedLocationClient;
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private CollectionReference mMarkerColRef = db.collection("Markers");
+    private UserProperties mCurrentUserProperties;
 
-    FirebaseFirestore firestore = FirebaseFirestore.getInstance();
-//    FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
-//        .setTimestampsInSnapshotsEnabled(true)
-//        .build();
-
-
-    private CollectionReference mCollectionRef = firestore.collection("Markers");
 
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
-
-//        firestore.setFirestoreSettings(settings);
+        mActivity = getActivity();
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(mActivity);
     }
 
     @Override
     public void onResume() {
         super.onResume();
+
+        getUserProperties();
 
         if (mMap == null) {
             getMapAsync(this);
@@ -55,29 +66,35 @@ public class MapsActivity extends SupportMapFragment implements OnMapReadyCallba
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        if (ActivityCompat.checkSelfPermission(getActivity(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getActivity(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            // TODO: Consider calling
-//            //    ActivityCompat#requestPermissions
-//            // here to request the missing permissions, and then overriding
-//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//            //                                          int[] grantResults)
-//            // to handle the case where the user grants the permission. See the documentation
-//            // for ActivityCompat#requestPermissions for more details.
-            //mMap.setMyLocationEnabled(true);
-        }
-
         mMap.setOnMapLongClickListener(this);
+
+        // TODO: check to see if permission is available (with checkPermission)
+        mMap.setMyLocationEnabled(true);
 
         addBuiltinMarkers();
 
         fetchMarkersFromDb();
+
+//        getLastKnownLocation();
     }
 
     @Override
     public void onMapLongClick(LatLng point) {
-        LatLng marker = new LatLng(point.latitude, point.longitude);
-        mMap.addMarker(new MarkerOptions().position(marker).title("new Marker"));
+        if (mCurrentUserProperties == null || !mCurrentUserProperties.isPostMapMarkersAllowed()) {
+            Toast.makeText(mActivity, "Du darfst keine Marker posten.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // TODO: create a dialog to read title and snippet
+        String title = "TestTitle";
+        String snippet = "TestSnippet";
+
+        // place the marker onto the map
+        mMap.addMarker(new MarkerOptions().position(point).title(title));
+
+        // save the new marker to the database
+        MapMarker mm = new MapMarker(new GeoPoint(point.latitude, point.longitude), title, snippet, mAuth.getUid());
+        mMarkerColRef.add(mm);
     }
 
     private void addBuiltinMarkers() {
@@ -107,25 +124,60 @@ public class MapsActivity extends SupportMapFragment implements OnMapReadyCallba
     }
 
     private void fetchMarkersFromDb() {
-        mCollectionRef.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+        mMarkerColRef.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
             @Override
             public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
                 List<DocumentSnapshot> docSnapshots = queryDocumentSnapshots.getDocuments();
                 for (DocumentSnapshot ds : docSnapshots) {
-                    GeoPoint gp = ds.getGeoPoint("location");
-                    if (gp == null) {
-                        return;
-                    }
-                    String name = ds.getString("name");
-                    if (name == null) {
-                        return;
-                    }
+                    try {
+                        MapMarker mm = ds.toObject(MapMarker.class);
+                        mMap.addMarker(new MarkerOptions()
+                                .position(new LatLng(mm.getLocation().getLatitude(), mm.getLocation().getLongitude()))
+                                .title(mm.getTitle())
+                                .snippet(mm.getSnippet())
+                        );
+                    } catch (NullPointerException e) {}
 
-                    //addMarkerToMap(new LatLng(gp.getLatitude(), gp.getLongitude()), name);
-                    mMap.addMarker(new MarkerOptions().position(new LatLng(gp.getLatitude(), gp.getLongitude())).title(name));
                 }
             }
 
         });
     }
+
+    private void getLastKnownLocation() {
+        if (ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+            return;
+
+        mFusedLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+            @Override
+            public void onComplete(@NonNull Task<Location> task) {
+                if (task.isSuccessful()) {
+                    Location location = task.getResult();
+                    GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
+                    Log.d(LOGTAG, "onComplete: latitude: " + geoPoint.getLatitude());
+                    Log.d(LOGTAG, "onComplete: longitude: " + geoPoint.getLongitude());
+                }
+            }
+        });
+
+    }
+
+    private void getUserProperties() {
+        if (mAuth.getUid() == null) {
+            mCurrentUserProperties = new UserProperties();
+        } else {
+            String userPropDocPath = "UserProperties/" + mAuth.getUid();
+
+            DocumentReference userPropDocRef = db.document(userPropDocPath);
+            userPropDocRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                @Override
+                public void onSuccess(DocumentSnapshot documentSnapshot) {
+                    if (documentSnapshot.exists()) {
+                        mCurrentUserProperties = documentSnapshot.toObject(UserProperties.class);
+                    }
+                }
+            });
+        }
+    }
+
 }
