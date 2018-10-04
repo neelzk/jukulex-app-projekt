@@ -119,7 +119,7 @@ public class EventsFragment extends Fragment implements SwipeRefreshLayout.OnRef
 
     private void postNewEvent() {
         if (mCurrentUserProperties == null || !mCurrentUserProperties.isPostMapMarkersAllowed()) {
-            Toast.makeText(mActivity, "Du darfst keine Marker posten.", Toast.LENGTH_LONG).show();
+            Toast.makeText(mActivity, "Du darfst keine Events posten.", Toast.LENGTH_LONG).show();
             return;
         }
 
