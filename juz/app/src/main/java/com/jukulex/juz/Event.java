@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 public class Event {
+    private String id;
     private String title;
     private String description;
     private Date startDate;
@@ -13,7 +14,8 @@ public class Event {
     private List<String> participants;
     private GeoPoint location;
 
-    public Event() {}
+    public Event() {
+    }
 
     public Event(String title, String description, Date startDate, Date endDate, List<String> participants, GeoPoint location) {
         this.title = title;
@@ -22,6 +24,10 @@ public class Event {
         this.endDate = endDate;
         this.participants = participants;
         this.location = location;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public Date getStartDate() {
@@ -36,11 +42,21 @@ public class Event {
         return description == null ? "" : description;
     }
 
-    public String getTitle() { return title; }
+    public String getTitle() {
+        return title;
+    }
 
-    public List<String> getParticipants() { return participants; }
+    public List<String> getParticipants() {
+        return participants;
+    }
 
-    public GeoPoint getLocation() { return location; }
+    public GeoPoint getLocation() {
+        return location;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String toString() {
         StringBuilder sb = new StringBuilder("Veranstaltung: ");
@@ -64,4 +80,5 @@ public class Event {
 
         return sb.toString();
     }
+
 }

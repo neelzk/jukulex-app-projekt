@@ -11,25 +11,21 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -178,7 +174,7 @@ public class EventsFragment extends Fragment implements SwipeRefreshLayout.OnRef
         Date twelveHoursAgo = new Date();
         twelveHoursAgo.setTime(twelveHoursAgo.getTime() - 43200000);
 
-        Query eventsQuery = db.collection("Events")
+        Query eventsQuery = mEventsColRef
                 .whereGreaterThan("startDate", twelveHoursAgo)
                 .orderBy("startDate");
 
@@ -191,6 +187,10 @@ public class EventsFragment extends Fragment implements SwipeRefreshLayout.OnRef
                 mEventsList.clear();
                 for (DocumentSnapshot ds : docSnapshots) {
                     Event ev = ds.toObject(Event.class);
+                    // get the Id from the document in the db and set is as member of the object
+                    // to be able to recognize it on click
+                    // seems to be a bit hacky
+                    ev.setId(ds.getId());
                     mEventsList.add(ev);
                 }
                 mEventsAdapter.notifyDataSetChanged();
