@@ -6,12 +6,23 @@ import java.util.Date;
 import java.util.List;
 
 public class Event {
+    private String title;
+    private String description;
     private Date startDate;
     private Date endDate;
-    private String description;
-    private String title;
     private List<String> participants;
     private GeoPoint location;
+
+    public Event() {}
+
+    public Event(String title, String description, Date startDate, Date endDate, List<String> participants, GeoPoint location) {
+        this.title = title;
+        this.description = description;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.participants = participants;
+        this.location = location;
+    }
 
     public Date getStartDate() {
         return startDate;

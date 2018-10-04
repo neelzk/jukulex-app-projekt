@@ -1,29 +1,42 @@
 package com.jukulex.juz;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.DatePicker;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TimePicker;
+import android.widget.Toast;
 
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 public class EventsFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
@@ -31,10 +44,12 @@ public class EventsFragment extends Fragment implements SwipeRefreshLayout.OnRef
     private UserProperties mCurrentUserProperties;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private CollectionReference mEventsColRef = db.collection("Events");
     private EventsRecyclerViewAdapter mEventsAdapter;
     private ArrayList<Event> mEventsList;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private FloatingActionButton mFabAdd;
+    private Context mActivity;
 
     @Nullable
     @Override
@@ -68,13 +83,13 @@ public class EventsFragment extends Fragment implements SwipeRefreshLayout.OnRef
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FirebaseAuth auth = FirebaseAuth.getInstance();
 
+        mActivity = getActivity();
         mEventsList = new ArrayList<>();
 
         // if a user is logged in, get his/her properties
-        if (auth.getCurrentUser() != null) {
-            String userPropDocPath = "UserProperties/" + auth.getUid();
+        if (mAuth.getCurrentUser() != null) {
+            String userPropDocPath = "UserProperties/" + mAuth.getUid();
 
             DocumentReference userPropDocRef = db.document(userPropDocPath);
             userPropDocRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
@@ -103,7 +118,57 @@ public class EventsFragment extends Fragment implements SwipeRefreshLayout.OnRef
     }
 
     private void postNewEvent() {
-        // TODO: implement me
+        if (mCurrentUserProperties == null || !mCurrentUserProperties.isPostMapMarkersAllowed()) {
+            Toast.makeText(mActivity, "Du darfst keine Marker posten.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        LayoutInflater inflater = LayoutInflater.from(mActivity);
+        View view = getLayoutInflater().inflate( R.layout.event_input_dialog, null);
+
+        final EditText inputTitle = view.findViewById(R.id.ed_title);
+        final EditText inputDescr = view.findViewById(R.id.ed_desc);
+        final DatePicker dp = view.findViewById(R.id.datepicker);
+        final TimePicker tp = view.findViewById(R.id.timepicker);
+        tp.setIs24HourView(true);
+
+        // create an alert dialog to let the user enter a title and an optional description
+        // by creating two EditTexts which are added to a LinearLayout
+        AlertDialog.Builder alert = new AlertDialog.Builder(mActivity);
+
+        alert.setTitle("Bitte Titel, Beschreibung und Datum eingeben");
+        alert.setView(view);
+
+        alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                // title is mandatory
+                String title = inputTitle.getText().toString();
+                if (title.length() == 0)
+                    return;
+
+                // FIXME: using deprecated methods here
+                Calendar calendar = new GregorianCalendar(dp.getYear(), dp.getMonth(), dp.getDayOfMonth(), tp.getCurrentHour(), tp.getCurrentMinute());
+                Date date = new Date(calendar.getTimeInMillis());
+
+                String description = inputDescr.getText().toString();
+                if (description.length() == 0)
+                    description = null;
+
+                // save the new event to the database
+                Event ev = new Event(title, description, date, null, null ,null);
+                mEventsColRef.add(ev).addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                    @Override
+                    public void onSuccess(DocumentReference documentReference) {
+                        Log.d(LOGTAG, "Event added");
+                        fetchEventsFromDb();
+                    }
+                });
+            }
+        });
+
+        alert.setNegativeButton("Abbrechen", null);
+        alert.show();
+
     }
 
     private void fetchEventsFromDb() {
