@@ -130,8 +130,13 @@ public class MainActivity extends AppCompatActivity
                 replaceFragment(new ImpressumFragment(), "Impressum", false);
                 break;
             case R.id.nav_maps:
-                // FIXME: y u no get selected in menu?
-                replaceFragment(new MapsActivity(), "Maps", true);
+                replaceFragment(new MapsActivity(), "Maps", false);
+                break;
+            case R.id.nav_feedback:
+                replaceFragment(new FeedbackFragment(), "Feedback", false);
+                break;
+            case R.id.nav_oepnv:
+                replaceFragment(new OepnvFragment(), "ÖPNV", false);
                 break;
             case R.id.nav_logout:
                 logoutUser();

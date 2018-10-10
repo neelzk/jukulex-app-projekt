@@ -14,9 +14,16 @@
             android:title="Termine" />
         <item
             android:id="@+id/nav_maps"
-            android:checkable="false"
             android:icon="@android:drawable/ic_dialog_map"
             android:title="Karte" />
+        <item
+            android:id="@+id/nav_feedback"
+            android:icon="@drawable/ic_menu_feedback"
+            android:title="Feedback" />
+        <item
+            android:id="@+id/nav_oepnv"
+            android:icon="@drawable/ic_menu_bus"
+            android:title="ÖPNV" />
         <item
             android:id="@+id/nav_impressum"
             android:icon="@drawable/ic_menu_impressum"
