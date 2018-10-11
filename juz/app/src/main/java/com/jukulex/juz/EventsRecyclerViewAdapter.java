@@ -44,10 +44,14 @@ public class EventsRecyclerViewAdapter extends RecyclerView.Adapter<EventsRecycl
 
         if (mAuth.getUid() == null) {
             holder.btn_participate.setVisibility(View.GONE);
+        } else {
+            holder.btn_participate.setVisibility(View.VISIBLE);
         }
 
         if (event.getStartDate() != null) {
             holder.tv_date.setText(event.getStartDate().toString());
+        } else {
+            holder.tv_date.setText("");
         }
 
         if (holder.isExpanded) {
@@ -55,22 +59,6 @@ public class EventsRecyclerViewAdapter extends RecyclerView.Adapter<EventsRecycl
         } else {
             holder.detailLayout.setVisibility(View.GONE);
         }
-
-        // FIXME: when scrolling and views are recycled, they may incorrectly be visible/gone
-
-        holder.parentLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                if (holder.isExpanded) {
-                    holder.isExpanded = false;
-                    holder.detailLayout.setVisibility(View.GONE);
-                } else {
-                    holder.isExpanded = true;
-                    holder.detailLayout.setVisibility(View.VISIBLE);
-                }
-            }
-        });
 
         holder.btn_participate.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -123,7 +111,21 @@ public class EventsRecyclerViewAdapter extends RecyclerView.Adapter<EventsRecycl
 
             img.setClickable(true);
 
+            parentLayout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (isExpanded) {
+                        isExpanded = false;
+                        detailLayout.setVisibility(View.GONE);
+                    } else {
+                        isExpanded = true;
+                        detailLayout.setVisibility(View.VISIBLE);
+                    }
+                }
+            });
+
         }
+
     }
     
 }
