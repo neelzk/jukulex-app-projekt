@@ -20,6 +20,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
@@ -121,7 +122,12 @@ public class MapsActivity extends SupportMapFragment implements OnMapReadyCallba
                     snippet = null;
 
                 // place the marker onto the map
-                mMap.addMarker(new MarkerOptions().position(point).title(title).snippet(snippet));
+                mMap.addMarker(new MarkerOptions()
+                        .position(point)
+                        .title(title)
+                        .snippet(snippet)
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                );
 
                 // save the new marker to the database
                 MapMarker mm = new MapMarker(new GeoPoint(point.latitude, point.longitude), title, snippet, mAuth.getUid());
@@ -143,6 +149,7 @@ public class MapsActivity extends SupportMapFragment implements OnMapReadyCallba
                 .position(new LatLng(52.138081, 9.060906))
                 .title("Mehrgenerationenhaus")
                 .snippet("Dietrich-Bonhoeffer-Str. 2, 32699 Extertal")
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_jukulex))
         );
 
         // Juz Bösingfeld
@@ -150,6 +157,7 @@ public class MapsActivity extends SupportMapFragment implements OnMapReadyCallba
                 .position(new LatLng(52.067692, 9.130269))
                 .title("Cinema 55")
                 .snippet("Mittelstr. 55, 32699 Extertal")
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_jukulex))
         );
 
         // Juz Almena. Center camera around this marker
@@ -157,7 +165,9 @@ public class MapsActivity extends SupportMapFragment implements OnMapReadyCallba
         mMap.addMarker(new MarkerOptions()
                 .position(haeuschen)
                 .title("Häuschen")
-                .snippet("Fütiger Str. 34, 32699 Extertal"));
+                .snippet("Fütiger Str. 34, 32699 Extertal")
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_jukulex))
+        ).showInfoWindow();
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(haeuschen, 15.0f));
 
     }
